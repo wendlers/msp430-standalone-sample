@@ -1,0 +1,109 @@
+HOWTO on 
+Running MSP430G2xxx stand alone (without Lauchpad), 
+use Launchpad for in circuit programming  
+sw@kaltpost.de
+http://gpio.kaltpost.de/
+
+
+Introduction
+------------
+
+This example shows how to drive a MSP430G2xx MCU standalone (without Launchpad). It also shows, how to use a Lauchpad for in circuit programming through only three lines (Spy By Wire). We first will have a look on the most minimal setup needed, to run a MSP430 valuline MCU outside the Launchpad. Then we will detail a little more on how to supply a regulated voltage to the device, and last we will see, how the Launchpad could be used as in circuit programmer. 
+
+To end up with a somehow usable example, and to test things out a little, a small example firmware is provided. This firmware just blinks two LEDs connected to the MSP430G2xxx, and switches the blink mode whenever the connected push button is pressed.  
+
+
+Prerequisits
+------------
+
+* Hardware *
+
+The following material is needed to build the example setup:
+
+1		TI Launchpad
+1		MSP430G2xxx MCU (the MSP430G2231 which comes with the launchpad is good enough)
+2		47kOhm resistors
+2		LEDs (blue)
+2 		Push buttons
+1		Breadboard
+bunch of	Jumper wires
+
+If you like to powersupply your setup from a battery, you also will need:
+
+1		Voltage Regulator LM1086
+2		0.1uF Capacitors
+1		9V Battery block
+1		9V Battery connector
+
+
+* Software *
+
+For compiling the example firmware, msp430-gcc must be installed on your system.  For flashing the "mspdebug" tool is used.
+
+
+Minimal Setup
+--------------
+
+First lets have a look at the most minimal standalone setup posible. In this setup we assume, a 3.3V regulated power supply is available, and all we need to do is power up the MSP430G2xxx. Well this is quite simple, the only thing we have to know is, that the MSP430G2xxx is kept in reset state, unless the RST pin is driven high. Thus, VCC and RST are connectet to 3.3V and GND to ground. To be able to reset the MSP430G (in this step through a push button, later on through the Launchpad), we add an additional 47k pull-up resistor between the RST pin and the 3.3V powersupply. Then between the RST pin and the resistor a push button is connected with its one side, and with its other side to ground. As long as the button is open, power is supplied to the RST pin through the pull-up resistor. At the moment the push button is pressed, RST is pulled to ground, and the MSP430 is reseted and kept in reset state unless the push button is released.  
+
+[see schematic msp430g2xxx_stand_alone_minimal.sch]
+
+
+Minimal Setup with Voltage Regulator
+------------------------------------
+
+The MSP430 value line devices need a supply voltage between 1.8 and 3.6V. It is very common to supply a voltage of 3.3V. The supply voltage should be kept accurate as much as possible. This could be easily achifed by using an voltage regulator which is able to regulate an input voltage within a certain range (e.g. 4-12V) to a defined fixed output voltage (3.3V in our case). In our next example, we use an LM1086 3.3V regulator which supplies 3.3V on its output. It is also a good idea to decouple the input and the output voltage on the regulator with two capacitors. Now we are able to power our MSP430 from a 9V battery.
+
+[see schematic msp430g2xxx_stand_alone_minimal_wpwr.sch]
+
+
+In Circuit Programming
+----------------------
+
+To load firmware on your MCU, you could place the MCU into the IC socket of the Launchpad, programm it and then put it back into your circuit. While this works pretty well from a technical point of view, it is not very handy to swap the MCU for each reprogramming between your circuit and the Launchpad. Anyway, there is no need to do so, since the Launchpad could be used easily for in ciruit programming. The Launhcpad is made up of two parts: the part where one evaluates the MSP430 valuline MCU, and and the part which includes the debugging/programming logic you connect through USB to your box. Programming/debugging for the valuline devices is done through a protocol called "Spy By Wire". To use "Spy by Wire", only three lines are needed: TEST, RST and GND. Thus, to program an MCU in your circuit, the only thing that needs to be done is, to remove the MCU from the Launchpad, then connect the TEST, RST and GND pins to the corresponding pins on the MCU in your circuit. The RST form the Launchpad is connected wher you already connected the reset button in the examples earlier. Now you can use "mspdebug" to program/debug your device as you would with the Launchpad. 
+
+[see schematic msp430g2xxx_stand_alone_minimal_wpwr.sch]
+
+Note: instead of using an external power supply for your circuit (like we did in the example above), you could use the Launchpad to power up your circuit. To do so, just connect VCC of the Launchpad to VCC of your circuit. Make sure, not to supply from two sources.
+
+
+Setup for the Sample Firmware
+-----------------------------
+
+To try things out (see if we could program in circiut, see if power supply works etc.), we are going to add two additionl LEDs on P1.0 and P1.6 (same pins as on the Launchpad for LEDs), as well as a pushbutton and a 47k pull-up resistor on P1.3 (also same pin as on for the button on the Launchpad):
+
+[see schematic msp430g2xxx_stand_alone_testsetup.sch]
+
+[see picture]
+
+The sample firmware then does nothing more but blink the LEDs on P1.0 and P1.6. The blink mode could be changed by pressing button on P1.3.
+
+
+Get the Firmware
+----------------
+
+You could download the sources from gitihub:
+
+<pre>
+git clone @TODO@
+</pre>
+
+Compilation
+------------
+
+This project is written for msp430-gcc on Linux (I used v4.5.3 which is available as package on ubuntu). For flashing the "mspdebug" tool was used (also from the Ubuntu package).
+
+To compile the source just issue a:
+
+make -C src
+
+This builds the firmware in the "src" subdirectory.
+
+
+Flashing
+---------
+
+To flash the firmware to your Launchpad you could use the "flash" make target:
+
+make -C src flash
+

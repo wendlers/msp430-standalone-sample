@@ -1,0 +1,70 @@
+HOWTO on 
+Controling an MSP430G2xxx stand alone (without Lauchpad), 
+from your BeagleBone
+sw@kaltpost.de
+http://gpio.kaltpost.de/
+
+
+Introduction
+------------
+
+In the article "HOWTO_MSP430_Standalone.txt" I described how one could run a MSP430 valuline MCU standalone (outside the Lanchpad), and how you could prgroam that MCU in circuit through "Spy By Wire". Next, I will show, how the example ciruit from that article could be connected and operated from a BeagleBone. We will see, how we can use the BB to power up/down the MSP430, and "communicate" to the MSP430 by using an input pin of the MSP (the one we used to connect the button to earlier). For setting the GPIOs on the BeasgoleBone, a simple bash script is used. While it does not make that munch sense to controll the blink mode of the LEDs connected to the MSP430, this example shows how simple it is to integrate a MCU project with the powerfull BeagleBone. 
+
+
+Prerequisits
+------------
+
+* Hardware *
+
+- The MSP430 standalone example setup as described here [HOWTO_MSP430_Standalone.txt]
+- A BeagleBone
+
+
+* Software *
+
+- For the MSP430, use the firmware as described here [HOWTO_MSP430_Standalone.txt]
+- On the beaglebone, a running Linux is needed (I used Ubuntu in this case)
+ 
+
+Hardware Setup
+--------------
+
+We will use two GPIOs on the BeagleBone. gpio1_6 for powering the MSP430 and gpio_7 for controlling the LED mode. Beside the two GPIO pins, the ground of the BeagleBone and the MSP430 must be connected togehter. Everything we need is located on P8 of the BeagleBone. The connections needed are thus:
+
+BeagleBone		MSP430
+P8.1 (GND)		20 (GND)
+P8.3 (gpio1_6)	 1 (VCC)
+P8.4 (gpio1_7)	 5 (P1.3) 
+
+
+Configuring the BeagleBone
+--------------------------
+
+* Pin MUX *
+
+The GPIOs on the BeagleBone support up to 8 different modes (0 to 7). Which mode is set for a GPIO depends on what the bootloader and/or the kernel configures on startup. Thus, the pins one likes to use are not neccessarily configured as digital IOs after startup. The first thing we need to do is check how the pins we intend to use are configured. This could be done through the kernels debug FS (it has to be compiled into your kernel). On the BeagleBone, the current MUX settings are under:   
+
+/sys/kernel/debug/omap_mux/
+
+To make things a little more complicated, the filenames used under that directory are the pin names for mode 0. You can lookup the mode 0 names e.g. in the "BeagleBone System Reference Manual". For "gpio1_6" it is "gpmc_ad6" and for "gpio1_7" it is "gpmc_ad7". To check the current settings for this pins, we could use the following shell commands:
+
+cat /sys/kernel/debug/omap_mux/gpmc_ad6
+cat /sys/kernel/debug/omap_mux/gpmc_ad7
+
+This should output something like this:
+
+@TODO
+
+Well what we need for this pins is MODE7 (digital IO) OUTPUT. To configure this for the pins, use the following: 
+
+echo 7 > /sys/kernel/debug/omap_mux/gpmc_ad6
+echo 7 > /sys/kernel/debug/omap_mux/gpmc_ad7
+
+If you check the MUXing for the pins again, it will look like this:
+
+
+And this is exactely what we need.
+
+* GPIOs *
+
+ 
